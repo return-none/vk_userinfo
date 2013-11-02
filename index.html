@@ -1,0 +1,128 @@
+<html>
+    <head>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js" type="text/javascript"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/hogan.js/2.0.0/hogan.js" type="text/javascript"></script>
+        <script type="text/javascript">
+            var user = { id: null };
+            if (!Object.prototype.watch)
+                Object.prototype.watch = function (prop, handler) {
+                    var oldval = this[prop], newval = oldval,
+                    getter = function () {
+                        return newval;
+                    },
+                    setter = function (val) {
+                        oldval = newval;
+                        return newval = handler.call(this, prop, oldval, val);
+                    };
+                    if (delete this[prop]) { // can't watch constants
+                        if (Object.defineProperty) // ECMAScript 5
+                            Object.defineProperty(this, prop, {
+                                get: getter,
+                                set: setter
+                            });
+                        else if (Object.prototype.__defineGetter__ && Object.prototype.__defineSetter__) { // legacy
+                            Object.prototype.__defineGetter__.call(this, prop, getter);
+                            Object.prototype.__defineSetter__.call(this, prop, setter);
+                        }
+                    }
+                };
+            user.watch('id', function(prop, oldval, val) {
+                get_frined(val);
+            });
+            function format_date(awkward_js_unixtime) {
+                var date = new Date(awkward_js_unixtime);
+                var day = date.getDate().toString();
+                var month = (date.getMonth() + 1).toString();
+                var year = date.getFullYear().toString();
+                var hrs = date.getHours().toString();
+                var mins = date.getHours().toString();
+                if (day.length === 1) day = "0" + day;
+                if (month.length === 1) month = "0" + month;
+                if (hrs.length === 1) hrs = "0" + hrs;
+                if (mins.length === 1) mins = "0" + mins;
+                return [day, month, year].join('-') + " at " + hrs + ":" + mins;
+            }
+            function render(userparams) {
+                var img = new Image();
+                img.onload = function () {
+                    $('.widgets').html((Hogan.compile($('#userWidget').html())).render(userparams));
+                };
+                img.src = userparams.image;
+            }
+            function get_frined(id) {
+                return $.ajax({
+                    url: "http://api.vk.com/method/users.get",
+                    data: {
+                        user_ids: id,
+                        fields: 'first_name, last_name, photo_100, last_seen, online'
+                    },
+                    dataType: 'jsonp',
+                    success: function(resp) {
+                        if (resp && resp.response && resp.response[0]) {
+                            user.username = resp.response[0].first_name + " " + resp.response[0].last_name;
+                            user.image = resp.response[0].photo_100;
+                            user.online = resp.response[0].online === 1 ? true : false;
+                            user.last_seen = resp.response[0].last_seen ? format_date(resp.response[0].last_seen.time * 1000) : "Never seen";
+                            render(user);
+                        }
+                    }
+                });
+            }
+        </script>
+        <style>
+            body {
+                margin: 0;
+                font-family: helvetica,arial,sans-serif;
+                -webkit-user-select: none;
+                   -moz-user-select: none;
+                    -ms-user-select: none;
+            }
+            .widget {
+                width: 200px;
+                height: 150px;
+                margin: 0 auto;
+                padding: 10px;
+                background-color: #eee;
+                border-radius: 5px;
+                box-shadow: 0 0 10px rgba(0,0,0,.5);
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                height: 150px;
+                margin-left: -100px;
+                margin-top: -85px;
+            }
+            .widget img {
+                display: block;
+                margin: 0 auto;
+                border-radius: 5px;
+                box-shadow: 0 0 5px rgba(0,0,0,.2);
+                pointer-events: none;
+            }
+            .widget h3, .widget p {
+                text-align: center;
+                cursor: default;
+            }
+            .widget h3 {
+                margin: 5px 0 0;
+            }
+            .widget p {
+                margin: 0;
+            }
+            .grayscale {
+                -webkit-filter: grayscale(100%);
+                filter: url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\'><filter id=\'grayscale\'><feColorMatrix type=\'matrix\' values=\'0.3333 0.3333 0.3333 0 0 0.3333 0.3333 0.3333 0 0 0.3333 0.3333 0.3333 0 0 0 0 0 1 0\'/></filter></svg>#grayscale");
+            }
+        </style>
+    </head>
+    <body>
+        <div class="widgets"></div>
+        <script type="text/html" id="userWidget">
+            <div class="widget">
+                <img src="{{image}}" {{^online}} class="grayscale" {{/online}} />
+                <h3>{{username}}</h3>
+                <p>{{last_seen}}</p>
+            </div>
+        </script>
+    </body>
+</html>
