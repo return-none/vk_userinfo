@@ -2,4 +2,11 @@
 
 Checks status. Nothing more. Just for Fun. Mostly harmle^W useless.
 
-[http://c1nde.github.io/vk_userinfo](http://c1nde.github.io/vk_userinfo)
+### Usage
+1. Open [http://c1nde.github.io/vk_userinfo](http://c1nde.github.io/vk_userinfo)
+2. Open JS-console
+3. Input user.id = 'XXX';
+
+**Example:**
+
+    user.id = 'durov';
